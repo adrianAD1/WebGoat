@@ -46,20 +46,20 @@ public class Assignment5 extends AssignmentEndpoint {
 
  @PostMapping("/challenge/5")
 @ResponseBody
-public AttackResult login(@RequestParam String username_login, @RequestParam String password_login) throws Exception {
-    if (!StringUtils.hasText(username_login) || !StringUtils.hasText(password_login)) {
+public AttackResult login(@RequestParam String username, @RequestParam String password) throws Exception{
+    if (!StringUtils.hasText(username) || !StringUtils.hasText(password)) {
         return failed(this).feedback("required4").build();
     }
 
-    if (!"Larry".equals(username_login)) {
-        return failed(this).feedback("user.not.larry").feedbackArgs(username_login).build();
+    if (!"Larry".equals(username)) {
+        return failed(this).feedback("user.not.larry").feedbackArgs(username).build();
     }
 
     try (var connection = dataSource.getConnection()) {
         String query = "SELECT password FROM challenge_users WHERE userid = ? AND password = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, username_login);
-            statement.setString(2, password_login);
+            statement.setString(1, username);
+            statement.setString(2, password);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
