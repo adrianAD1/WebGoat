@@ -19,9 +19,7 @@
  *
  * Source for this application is maintained at https://github.com/WebGoat/WebGoat, a repository for free software projects.
  */
-
 package org.owasp.webgoat.webwolf.mailbox;
-
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,42 +33,31 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
-
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class MailboxController {
-  
-    private final MailboxRepository mailboxRepository;
-    private final UserService userService;
-
-    @GetMapping("/mail")
-    public ModelAndView mail() {
-        String username = userService.getAuthenticatedUsername();
-        ModelAndView modelAndView = new ModelAndView();
-        List<Email> emails = mailboxRepository.findByRecipientOrderByTimeDesc(username);
-        if (emails != null && !emails.isEmpty()) {
-            modelAndView.addObject("total", emails.size());
-            modelAndView.addObject("emails", emails);
-        }
-        modelAndView.setViewName("mailbox");
-        return modelAndView;
+  private final MailboxRepository mailboxRepository;
+  @GetMapping("/mail")
+  public ModelAndView mail() {
+    UserDetails user = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    ModelAndView modelAndView = new ModelAndView();
+    List<Email> emails = mailboxRepository.findByRecipientOrderByTimeDesc(user.getUsername());
+    if (emails != null && !emails.isEmpty()) {
+      modelAndView.addObject("total", emails.size());
+      modelAndView.addObject("emails", emails);
     }
-
-    @PostMapping("/mail")
-    @ResponseStatus(HttpStatus.CREATED)
-    public void sendEmail(@Valid @RequestBody EmailDTO emailDTO) {
-        Email email = new Email();
-        email.setRecipient(emailDTO.getRecipient());
-        email.setSubject(emailDTO.getSubject());
-        email.setContent(emailDTO.getContent());
-        mailboxRepository.save(email);
-    }
-
-    @DeleteMapping("/mail")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public void deleteUserMail() {
-       String username = userService.getAuthenticatedUsername();
-        mailboxRepository.deleteByRecipient(username);
-    }
+    modelAndView.setViewName("mailbox");
+    return modelAndView;
+  }
+  @PostMapping("/mail")
+  @ResponseStatus(HttpStatus.CREATED)
+  public void sendEmail(@RequestBody Email email) {
+    mailboxRepository.save(email);
+  }
+  @DeleteMapping("/mail")
+  @ResponseStatus(HttpStatus.ACCEPTED)
+  public void deleteAllMail() {
+    mailboxRepository.deleteAll();
+  }
 }
