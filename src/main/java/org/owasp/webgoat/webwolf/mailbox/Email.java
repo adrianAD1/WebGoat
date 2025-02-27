@@ -26,16 +26,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import javax.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
-/**
- * @author nbaars
- * @since 8/20/17.
- */
+
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -43,32 +38,35 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Email implements Serializable {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @JsonIgnore private LocalDateTime time = LocalDateTime.now();
+    @JsonIgnore
+    @Column(nullable = false)
+    private LocalDateTime time = LocalDateTime.now();
 
-  @Column(length = 1024)
-  private String contents;
+    @Column(length = 1024, nullable = false)
+    private String contents;
 
-  private String sender;
-  private String title;
-  private String recipient;
+    @Column(nullable = false)
+    private String sender;
 
-  public String getSummary() {
-    return "-" + this.contents.substring(0, Math.min(50, contents.length()));
-  }
+    @Column(nullable = false)
+    private String title;
 
-  public LocalDateTime getTimestamp() {
-    return time;
-  }
+    @Column(nullable = false)
+    private String recipient;
 
-  public String getTime() {
-    return DateTimeFormatter.ofPattern("h:mm a").format(time);
-  }
+    public String getSummary() {
+        return "-" + this.contents.substring(0, Math.min(50, contents.length()));
+    }
 
-  public String getShortSender() {
-    return sender.substring(0, sender.indexOf("@"));
-  }
+    public String getTimestamp() {
+        return DateTimeFormatter.ofPattern("h:mm a").format(time);
+    }
+
+    public String getShortSender() {
+        return sender != null && sender.contains("@") ? sender.substring(0, sender.indexOf("@")) : sender;
+    }
 }
