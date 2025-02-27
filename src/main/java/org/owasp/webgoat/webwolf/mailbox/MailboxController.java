@@ -36,36 +36,61 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+public class EmailDTO {
+    private String sender;
+    private String title;
+    private String recipient;
+    private String contents;
+
+    // Getters y Setters
+    public String getSender() { return sender; }
+    public void setSender(String sender) { this.sender = sender; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getRecipient() { return recipient; }
+    public void setRecipient(String recipient) { this.recipient = recipient; }
+    public String getContents() { return contents; }
+    public void setContents(String contents) { this.contents = contents; }
+}
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class MailboxController {
 
-  private final MailboxRepository mailboxRepository;
+    private final MailboxRepository mailboxRepository;
 
-  @GetMapping("/mail")
-  public ModelAndView mail() {
-    UserDetails user =
-        (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    ModelAndView modelAndView = new ModelAndView();
-    List<Email> emails = mailboxRepository.findByRecipientOrderByTimeDesc(user.getUsername());
-    if (emails != null && !emails.isEmpty()) {
-      modelAndView.addObject("total", emails.size());
-      modelAndView.addObject("emails", emails);
+    @GetMapping("/mail")
+    public ModelAndView mail() {
+        UserDetails user = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        ModelAndView modelAndView = new ModelAndView();
+        List<Email> emails = mailboxRepository.findByRecipientOrderByTimeDesc(user.getUsername());
+
+        if (emails != null && !emails.isEmpty()) {
+            modelAndView.addObject("total", emails.size());
+            modelAndView.addObject("emails", emails);
+        }
+
+        modelAndView.setViewName("mailbox");
+        return modelAndView;
     }
-    modelAndView.setViewName("mailbox");
-    return modelAndView;
-  }
 
-  @PostMapping("/mail")
-  @ResponseStatus(HttpStatus.CREATED)
-  public void sendEmail(@RequestBody Email email) {
-    mailboxRepository.save(email);
-  }
+    @PostMapping("/mail")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void sendEmail(@RequestBody EmailDTO emailDTO) {
+        Email email = new Email();
+        email.setSender(emailDTO.getSender());
+        email.setTitle(emailDTO.getTitle());
+        email.setRecipient(emailDTO.getRecipient());
+        email.setContents(emailDTO.getContents());
+        email.setTime(LocalDateTime.now());
 
-  @DeleteMapping("/mail")
-  @ResponseStatus(HttpStatus.ACCEPTED)
-  public void deleteAllMail() {
-    mailboxRepository.deleteAll();
-  }
+        mailboxRepository.save(email);
+    }
+
+    @DeleteMapping("/mail")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void deleteAllMail() {
+        mailboxRepository.deleteAll();
+    }
 }
