@@ -35,56 +35,51 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import java.io.*;
-import java.util.Arrays;
-import java.util.List;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-// Clase personalizada para restringir la deserialización a clases permitidas
-public class SecureObjectInputStream extends ObjectInputStream {
+@RestController
+@AssignmentHints({
+  "insecure-deserialization.hints.1",
+  "insecure-deserialization.hints.2",
+  "insecure-deserialization.hints.3"
+})
+public class InsecureDeserializationTask extends AssignmentEndpoint {
 
-    // Lista de clases permitidas para deserialización
-    private static final List<String> APPROVED_CLASSES = Arrays.asList(
-        AllowedClass1.class.getName(),
-        AllowedClass2.class.getName()
-    );
+  @PostMapping("/InsecureDeserialization/task")
+  @ResponseBody
+  public AttackResult completed(@RequestParam String token) throws IOException {
+    String b64token;
+    long before;
+    long after;
+    int delay;
 
-    public SecureObjectInputStream(InputStream in) throws IOException {
-        super(in);
-    }
+    b64token = token.replace('-', '+').replace('_', '/');
 
-    @Override
-    protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException {
-        if (!APPROVED_CLASSES.contains(osc.getName())) {
-            throw new InvalidClassException("Unauthorized deserialization attempt", osc.getName());
+    try (ObjectInputStream ois =
+        new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(b64token)))) {
+      before = System.currentTimeMillis();
+      Object o = ois.readObject();
+      if (!(o instanceof VulnerableTaskHolder)) {
+        if (o instanceof String) {
+          return failed(this).feedback("insecure-deserialization.stringobject").build();
         }
-        return super.resolveClass(osc);
+        return failed(this).feedback("insecure-deserialization.wrongobject").build();
+      }
+      after = System.currentTimeMillis();
+    } catch (InvalidClassException e) {
+      return failed(this).feedback("insecure-deserialization.invalidversion").build();
+    } catch (IllegalArgumentException e) {
+      return failed(this).feedback("insecure-deserialization.expired").build();
+    } catch (Exception e) {
+      return failed(this).feedback("insecure-deserialization.invalidversion").build();
     }
-}
 
-// Clase encargada de procesar las solicitudes HTTP
-public class RequestProcessor {
-
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        try (ServletInputStream servletIS = request.getInputStream();
-             ObjectInputStream objectIS = new SecureObjectInputStream(servletIS)) {
-            
-            Object input = objectIS.readObject();
-
-            // Verificar si la clase deserializada es la esperada
-            if (!(input instanceof AllowedClass1 || input instanceof AllowedClass2)) {
-                throw new SecurityException("Invalid object type received");
-            }
-
-            // Aquí puedes procesar el objeto de forma segura
-            response.getWriter().write("Object received and validated");
-            
-        } catch (InvalidClassException e) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Deserialization of this class is not allowed.");
-        } catch (ClassNotFoundException | SecurityException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid object type received.");
-        }
+    delay = (int) (after - before);
+    if (delay > 7000) {
+      return failed(this).build();
     }
+    if (delay < 3000) {
+      return failed(this).build();
+    }
+    return success(this).build();
+  }
 }
