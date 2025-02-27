@@ -1,7 +1,7 @@
 package org.owasp.webgoat.webwolf.mailbox;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import java.validation.constraints.NotNull;
+import java.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
