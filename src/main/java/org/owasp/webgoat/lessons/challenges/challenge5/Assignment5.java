@@ -46,7 +46,7 @@ public class Assignment5 extends AssignmentEndpoint {
 
  @PostMapping("/challenge/5")
 @ResponseBody
-public AttackResult login(@RequestParam String username_login, @RequestParam String password_login) throws Exception {
+public AttackResult login(@RequestParam String username_login, @RequestParam String password_login){
     if (!StringUtils.hasText(username_login) || !StringUtils.hasText(password_login)) {
         return failed(this).feedback("required4").build();
     }
