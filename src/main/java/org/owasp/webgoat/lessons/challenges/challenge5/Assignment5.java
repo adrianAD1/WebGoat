@@ -67,12 +67,8 @@ public AttackResult login(@RequestParam String username_login, @RequestParam Str
                 } else {
                     return failed(this).feedback("login.failure").build();
                 }
-
-      if (resultSet.next()) {
-        return success(this).feedback("challenge.solved").feedbackArgs(flags.getFlag(5)).build();
-      } else {
-        return failed(this).feedback("challenge.close").build();
-      }
+            }
+        }     
     }
   }
 }
