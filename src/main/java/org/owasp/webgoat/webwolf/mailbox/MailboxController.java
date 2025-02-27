@@ -70,7 +70,6 @@ public class MailboxController {
     @DeleteMapping("/mail")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void deleteUserMail() {
-        String username = userService.getAuthenticatedUsername();
-        mailboxRepository.deleteByRecipient(username);
+        mailboxRepository.deleteAll();
     }
 }
